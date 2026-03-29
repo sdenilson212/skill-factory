@@ -5,6 +5,8 @@
 
 **SKILL 自动化生产流水线** — 从需求描述到高质量 Agent Skill 包的完整制作流程。
 
+[English](#english) | 中文
+
 ---
 
 ## 为什么需要 Skill Factory？
@@ -138,3 +140,113 @@ skill-factory/
 ## License
 
 MIT License
+
+---
+
+<a name="english"></a>
+
+## English
+
+### Why Skill Factory?
+
+Building Agent Skills by hand at scale leads to common problems:
+
+- **Inconsistent structure** — missing steps, malformed frontmatter
+- **Security gaps** — prompt injection risks, jailbreak vectors left undetected
+- **Logic conflicts** — contradictory constraints, mismatched inputs/outputs
+- **No traceability** — no audit trail, no way to know what changed or why
+
+**Skill Factory** solves this with a battle-tested five-stage pipeline that takes you from a plain-language requirement all the way to a reviewed, installable Skill package.
+
+---
+
+### Features
+
+- **Five-stage quality gates**: Dependency check → Requirements mining → Security audit → Package generation → Code audit
+- **P0/P1/P2 issue classification**: Critical issues force a rollback; important issues are fixed in place; suggestions are applied immediately
+- **Three-dimensional security audit**: Structural integrity + Security (injection/jailbreak/data leakage) + Logic consistency
+- **Human confirmation at every write**: No files are created or modified without explicit user approval — you can abort at any point
+
+---
+
+### Quick Start
+
+```bash
+# 1. Copy skill-factory into your skills directory
+cp -r skill-factory/ ~/.workbuddy/skills/
+
+# 2. Activate it in an AI conversation — just describe your need:
+#    "Create a Skill that analyzes Excel files and outputs JSON"
+
+# 3. The pipeline runs automatically:
+#    Stage 0 — Check dependencies
+#    Stage 1 — Mine requirements (multi-round Q&A)
+#    Stage 2 — Security audit
+#    Stage 3 — Generate SKILL package
+#    Stage 4 — Code audit
+#    Stage 5 — Install (optional)
+```
+
+---
+
+### Pipeline Architecture
+
+```
+Stage 0  Dependency Check    Verify the four sub-skills are installed
+Stage 1  prompt-generator    Multi-round requirements mining + prompt draft
+Stage 2  prompt-auditor      Security & logic integrity review
+Stage 3  skill-creator       Generate complete SKILL package
+Stage 4  skill-auditor       Code analysis + security scan + auto-fix
+Stage 5  Install             Move from temp dir to skills directory (optional)
+```
+
+---
+
+### Prerequisites
+
+The following four sub-skills must already be installed:
+
+| Skill | Purpose |
+|-------|---------|
+| `prompt-generator` | Requirements mining & prompt generation |
+| `prompt-auditor` | SKILL.md security & logic audit |
+| `skill-creator` | SKILL package structure generation |
+| `skill-auditor` | Code audit & security scan |
+
+> These skills are implemented for the OpenClaw / WorkBuddy ecosystem. To use them standalone, implement tools that conform to each stage's interface contract.
+
+---
+
+### Issue Severity Levels
+
+| Level | Definition | Action |
+|-------|-----------|--------|
+| P0 | Critical security flaw or logic collapse (injection, jailbreak, system info leak) | Force rollback to Stage 1 |
+| P1 | Important logic defect or missing functionality (bad paths, conflicting constraints, over-permission) | Fix in place, re-audit |
+| P2 | Improvement suggestion (formatting, ambiguous wording, missing examples) | Apply directly, continue |
+
+---
+
+### Repository Structure
+
+```
+skill-factory/
+├── SKILL.md                    # Pipeline orchestrator (main entry point)
+├── README.md                   # This file
+├── LICENSE                     # MIT License
+├── CONTRIBUTING.md             # Contribution guide
+├── .gitignore
+├── .github/
+│   └── workflows/
+│       └── validate.yml        # CI: validates SKILL.md structure
+└── references/
+    ├── skill-template.md       # Standard SKILL.md format template
+    ├── audit-checklist.md      # Stage 2 audit checklist
+    └── pipeline-log.md         # Pipeline run log format
+```
+
+---
+
+### License
+
+MIT — see [LICENSE](./LICENSE)
