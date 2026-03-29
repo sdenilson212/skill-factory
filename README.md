@@ -1,7 +1,7 @@
 # Skill Factory
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![GitHub Actions: Validate](https://github.com/工作流/skill-factory/actions/workflows/validate.yml/badge.svg)](https://github.com/工作流/skill-factory/actions)
+[![GitHub Actions: Validate](https://github.com/sdenilson212/skill-factory/actions/workflows/validate.yml/badge.svg)](https://github.com/sdenilson212/skill-factory/actions)
 
 **SKILL 自动化生产流水线** — 从需求描述到高质量 Agent Skill 包的完整制作流程。
 

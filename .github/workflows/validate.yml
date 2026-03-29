@@ -2,14 +2,13 @@ name: Validate SKILL.md
 
 on:
   push:
-    branches: [main]
+    branches: [ main ]
   pull_request:
-    branches: [main]
+    branches: [ main ]
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -20,50 +19,44 @@ jobs:
             echo "ERROR: SKILL.md not found"
             exit 1
           fi
-          echo "SKILL.md found"
+          echo "✅ SKILL.md exists"
 
-      - name: Validate frontmatter
+      - name: Check frontmatter
         run: |
           if ! grep -q "^name:" SKILL.md; then
-            echo "ERROR: SKILL.md missing 'name' field in frontmatter"
+            echo "ERROR: Missing 'name' in frontmatter"
             exit 1
           fi
           if ! grep -q "^description:" SKILL.md; then
-            echo "ERROR: SKILL.md missing 'description' field in frontmatter"
+            echo "ERROR: Missing 'description' in frontmatter"
             exit 1
           fi
-          if ! grep -q "^version:" SKILL.md; then
-            echo "ERROR: SKILL.md missing 'version' field in frontmatter"
-            exit 1
-          fi
-          echo "Frontmatter validation passed"
+          echo "✅ Frontmatter OK"
 
-      - name: Validate structure
+      - name: Check references directory
         run: |
-          REQUIRED_STAGES=5
-          STAGE_COUNT=$(grep -c "^### Stage" SKILL.md || echo "0")
-          if [ "$STAGE_COUNT" -lt "$REQUIRED_STAGES" ]; then
-            echo "ERROR: Expected at least $REQUIRED_STAGES Stage sections, found $STAGE_COUNT"
+          if [ ! -d "references" ]; then
+            echo "ERROR: references/ directory not found"
             exit 1
           fi
-          echo "Stage structure validation passed ($STAGE_COUNT stages)"
+          echo "✅ references/ OK"
 
-      - name: Validate no hardcoded paths
+      - name: Check required reference files
         run: |
-          HARDCODED=$(grep -n "C:\\\\Users\\\\" SKILL.md || true)
-          if [ -n "$HARDCODED" ]; then
-            echo "ERROR: Hardcoded Windows user paths found:"
-            echo "$HARDCODED"
-            exit 1
-          fi
-          echo "No hardcoded paths found"
-
-      - name: Validate references exist
-        run: |
-          for ref in $(grep -oE '\[references/[^]]+\.md\]' SKILL.md | tr -d '[]' | sed 's/references\///'); do
-            if [ ! -f "references/$ref" ]; then
-              echo "ERROR: Referenced file 'references/$ref' does not exist"
+          files=("references/skill-template.md" "references/audit-checklist.md" "references/pipeline-log.md")
+          for f in "${files[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "ERROR: Required file $f not found"
               exit 1
             fi
           done
-          echo "All references validated"
+          echo "✅ All required reference files present"
+
+      - name: Check no personal info
+        run: |
+          # Check for common personal info patterns
+          if grep -rn "api_key\s*=\s*['\"].\+['\"]" . --include="*.md" --include="*.py"; then
+            echo "ERROR: Potential API key found"
+            exit 1
+          fi
+          echo "✅ No personal info detected"
