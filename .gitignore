@@ -1,0 +1,37 @@
+# 环境变量配置提示
+# 在发布版本中不要包含实际路径
+
+# 操作系统
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# 临时文件
+.temp/
+*.tmp
+*.log
+
+# 技能流水线运行产生的临时输出
+temp/
+
+# 本地环境配置（不应提交）
+.env
+.env.local
+.env.*.local
+
+# 缓存
+.cache/
+*.cache
+
+# 依赖（如果有 node_modules 等）
+node_modules/
+__pycache__/
+*.pyc
+*.pyo
