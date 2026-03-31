@@ -377,7 +377,8 @@ EXPERIENCE.md 分两部分，**Stage 3 只写第一部分**：
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 位置：%WORKBUDDY_SKILLS_DIR%\temp\[skill-name]\
 文件清单：
-  - SKILL.md ✓
+  - SKILL.md ✓（已包含"激活时必读"段落）
+  - EXPERIENCE.md ✓（第一部分 3-5 条结构性经验 + 第二部分占位符）
   - scripts/[N 个脚本] ✓ / 无
   - references/[N 个文档] ✓ / 无
 → 开始 Stage 4 审计
