@@ -1,0 +1,400 @@
+---
+name: skill-creator
+version: 1.1.0
+category: core-skill
+description: SKILL 包生成器 — 根据验证通过的提示词，自动生成完整的 SKILL 包（含 SKILL.md 和 EXPERIENCE.md）
+---
+
+# Stage 3: Skill Creator — SKILL 包自动生成与经验积累
+
+> **本 SKILL 是 skill-factory 流水线的第三步（核心生成层）**
+>
+> 职责：接收审核通过的提示词 → 生成完整 SKILL 包结构 → 自动生成 EXPERIENCE.md  
+> 输出物：[SKILL 名称]/ 目录，包含 SKILL.md + EXPERIENCE.md + scripts/  
+> 上游：Stage 2 （安全审核）| 下游：Stage 4 （质量审计）
+
+---
+
+## 激活时必读
+
+**在执行任何 SKILL 包生成前，先读取同目录下的 `EXPERIENCE.md`。**
+
+这个文件记录了在包生成中的关键决策点：
+- 如何自动决定 EXPERIENCE.md 的模板
+- 什么情况下需要手工补充经验
+- 如何避免生成的包结构混乱
+
+---
+
+## 核心职责
+
+### 输入
+来自 Stage 2 的"审核通过"确认，包含：
+- 验证无误的 SKILL.md 提示词
+- 审核报告（P0/P1/P2 分级）
+- 用户确认信息
+
+### 输出
+完整的 SKILL 包目录结构：
+
+```
+[skill-name]/
+├── SKILL.md                    ← 经审核通过的提示词（复制自 Stage 2）
+├── EXPERIENCE.md               ← 自动生成的经验第一部分
+├── scripts/
+│   ├── activate.py            ← 激活脚本
+│   └── [task-specific].py      ← 特定任务脚本（如有）
+└── references/
+    └── [external-docs].md      ← 参考文档（如有）
+```
+
+### 关键特性
+
+1. **SKILL.md 头部自动插入"激活时必读"段落**
+   - 确保每次加载时都会读 EXPERIENCE.md
+   - 保护性注释防止用户误删
+
+2. **EXPERIENCE.md 自动生成第一部分（3-5 条基础经验）**
+   - 根据 SKILL 类型自动选择模板
+   - 第二部分留给 Stage 5 用户反馈补充
+
+3. **完整的元数据追溯**
+   - 生成来源（Stage 3）
+   - 基础 Skill（从 Stage 1-2 来）
+   - 生成时间戳
+   - 置信度标记
+
+---
+
+## 执行流程
+
+### Step 1: 解析审核通过的提示词
+
+**输入**：Stage 2 交付的内容
+```
+[审核结果]
+状态：通过 ✓
+P0 问题数：0
+P1 问题数：0
+P2 问题数：0
+修改内容：[如有]
+```
+
+**解析操作**：
+- 确认无 P0/P1 问题
+- 提取 SKILL 元数据（name、version、category）
+- 识别 SKILL 类型（代码/数据/文案/绘画/其他）
+- 记录审核通过时间
+
+### Step 2: 生成目录结构
+
+**创建标准目录**：
+```bash
+mkdir -p [skill-name]/scripts/
+mkdir -p [skill-name]/references/
+```
+
+### Step 3: 生成 SKILL.md（含"激活时必读"段）
+
+**操作**：
+1. 复制 Stage 2 通过的提示词内容
+2. 在顶部（frontmatter 后）自动插入以下段落：
+
+```markdown
+---
+name: [name]
+version: [version]
+---
+
+# 激活时必读
+
+**每次加载本 SKILL 时，先读取同目录下的 `EXPERIENCE.md`。**
+
+读取规则：
+- 只读其中的 EXP 条目，了解这个 SKILL 的关键经验
+- 不对用户显示读取过程
+- 将经验作为隐式判断依据，直接影响本次执行决策
+
+---
+
+# [SKILL 标题]
+
+[原始提示词内容...]
+```
+
+### Step 4: 自动生成 EXPERIENCE.md 的第一部分
+
+**根据 SKILL 类型选择模板**：
+
+#### 模板 A：代码生成类 SKILL
+```markdown
+---
+skill: [skill-name]
+role: 代码生成
+stage: 3-auto-generated
+updated: [timestamp]
+---
+
+# EXPERIENCE.md — 代码生成 SKILL 经验积累
+
+## EXP-001: 语言版本偏好的影响
+见过：用户要"转换代码"时，有时想要 Python，有时想要 JavaScript
+因此知道：必须在第一步就确认目标语言，不要猜测
+现在会：生成前明确询问"目标语言是？"，不能模糊回答
+
+## EXP-002: 框架选择与性能权衡
+见过：有时候用户说"快速生成"，实际需要的是"可维护"
+因此知道：快速和可维护往往矛盾，需要用户优先级清楚
+现在会：提供 2-3 种框架选项，让用户根据优先级选
+
+## EXP-003: 错误处理的完整性
+见过：快速生成的代码往往漏掉异常处理，导致后续问题
+因此知道：必须明确说明"包含/不包含"哪些错误处理
+现在会：生成前问"是否需要详细的异常捕获和日志"
+
+## EXP-004: 测试用例的必要性
+见过：没有测试用例的代码，用户很难验证是否正确
+因此知道：对于关键功能，应该生成简单的测试用例
+现在会：生成代码时标记"# 测试"部分，便于用户验证
+
+## EXP-005: 依赖版本的兼容性
+见过：代码在某些库版本下不兼容，导致用户运行出错
+因此知道：需要明确指定关键库的最小版本
+现在会：在注释中标记"Requires: library >= X.Y.Z"
+
+---
+
+## 补充（由 Stage 5 或用户提供）
+
+[这部分由用户反馈后填充]
+```
+
+#### 模板 B：数据分析类 SKILL
+```markdown
+---
+skill: [skill-name]
+role: 数据分析
+stage: 3-auto-generated
+updated: [timestamp]
+---
+
+# EXPERIENCE.md — 数据分析 SKILL 经验积累
+
+## EXP-001: 数据源的差异处理
+见过：不同数据源（CSV / JSON / 数据库）需要完全不同的加载方式
+因此知道：必须在开头明确确认数据源格式
+现在会：生成前问"数据来自哪里？什么格式？"
+
+## EXP-002: 数据清洗的隐藏成本
+见过：用户说"分析数据"，实际 80% 时间在清洗
+因此知道：必须问清楚"数据质量怎样？需要清洗吗？"
+现在会：在流程中明确分"数据加载" → "数据清洗" → "分析"三段
+
+## EXP-003: 指标定义的歧义性
+见过：用户说"统计增长"，有人指月环比，有人指年同比
+因此知道：指标名称必须精确定义，不能模糊
+现在会：生成代码前，明确列出计算公式和定义
+
+## EXP-004: 可视化的适用场景
+见过：有些分析用表格最清楚，但用户坚持要图表
+因此知道：必须根据数据特点推荐图表类型
+现在会：建议"这些数据适合用【柱状图/折线图/热力图】"
+
+## EXP-005: 性能与准确度的权衡
+见过：百万级数据的分析，需要抽样还是全量处理
+因此知道：必须问清数据量级和时间约束
+现在会：根据量级和约束，提供"精确模式"或"快速模式"
+
+---
+
+## 补充（由 Stage 5 或用户提供）
+
+[这部分由用户反馈后填充]
+```
+
+#### 模板 C：文案创作类 SKILL
+```markdown
+---
+skill: [skill-name]
+role: 文案创作
+stage: 3-auto-generated
+updated: [timestamp]
+---
+
+# EXPERIENCE.md — 文案创作 SKILL 经验积累
+
+## EXP-001: 受众定义的精度
+见过：用户说"为年轻人写"，但没说购买力、消费习惯
+因此知道：受众必须多个维度定义，不能单一标签
+现在会：问"年龄、收入、消费习惯、痛点分别是什么？"
+
+## EXP-002: 品牌调性的一致性
+见过：一个品牌既要"高端专业"又要"亲切幽默"，用户改来改去
+因此知道：调性必须唯一确认，不能模糊
+现在会：给出"正式 vs 幽默 vs 温暖 vs 激进"选项，让用户pick
+
+## EXP-003: 转化目标的不同写法
+见过："促进销售"的写法和"建立品牌认知"完全不同，容易混淆
+因此知道：目标必须明确，因为直接影响论证策略
+现在会：确认"是转化购买、还是品牌认知、还是教育？"
+
+## EXP-004: 长度限制的准确性
+见过：用户说"短文案"，我写了 500 字，用户不满意
+因此知道：必须明确"多少字以内"或"多少行以内"
+现在会：问"最多多少字？"并在生成时严格控制
+
+## EXP-005: 参考案例的必要性
+见过：没有参考的情况下，生成的文案和用户想象相差很大
+因此知道：最好有 1-2 个参考案例，帮助 AI 理解调性
+现在会：问"有类似的成功案例吗？可以参考一下"
+
+---
+
+## 补充（由 Stage 5 或用户提供）
+
+[这部分由用户反馈后填充]
+```
+
+#### 模板 D：AI 绘画类 SKILL
+```markdown
+---
+skill: [skill-name]
+role: AI 绘画
+stage: 3-auto-generated
+updated: [timestamp]
+---
+
+# EXPERIENCE.md — AI 绘画 SKILL 经验积累
+
+## EXP-001: 风格定义的精确度
+见过：用户说"日漫风格"，实际想要的是"治愈系日漫"而不是"动作向日漫"
+因此知道：风格必须加修饰词，不能只有一个标签
+现在会：问"是治愈系、动作向、还是其他日漫分支？"
+
+## EXP-002: 主体和背景的权重
+见过：用户只说了人物，忘了说环境，生成的图背景不对
+因此知道：必须分别确认"主体"和"背景"的要求
+现在会：问"主体是什么？背景需要什么样的环境？"
+
+## EXP-003: 构图的视觉影响
+见过：同样的主体，不同构图（全景 vs 特写）效果完全不同
+因此知道：构图必须明确，因为直接影响视觉冲击
+现在会：给"全景 / 中景 / 特写 / 对角线"选项
+
+## EXP-004: 色调与氛围的关联
+见过：冷色调和暖色调虽然看起来不同，但对氛围影响更大
+因此知道：色调选择时要问清"是要冷静感还是温暖感"
+现在会：问"色调偏好？冷色（冷静）/ 暖色（温暖）/ 混合"
+
+## EXP-005: 用途与分辨率的关联
+见过：生成的图在手机上完美，放大后就模糊了
+因此知道：必须问清用途，因为决定了需要的分辨率
+现在会：问"是手机壁纸、电脑壁纸、还是印刷用？"
+
+---
+
+## 补充（由 Stage 5 或用户提供）
+
+[这部分由用户反馈后填充]
+```
+
+### Step 5: 生成激活脚本
+
+**创建 `scripts/activate.py`**：
+```python
+#!/usr/bin/env python3
+"""
+Activate script for [skill-name]
+Generated by skill-factory Stage 3 at [timestamp]
+"""
+
+import os
+from pathlib import Path
+
+def read_experience():
+    """Read EXPERIENCE.md before executing skill"""
+    skill_dir = Path(__file__).parent.parent
+    exp_file = skill_dir / "EXPERIENCE.md"
+    
+    if exp_file.exists():
+        print("📚 Loading EXPERIENCE.md...")
+        with open(exp_file, 'r', encoding='utf-8') as f:
+            content = f.read()
+            # 只显示 EXP 条目
+            print(content)
+    else:
+        print("⚠️ EXPERIENCE.md not found")
+
+def main():
+    print(f"Activating [skill-name]...")
+    read_experience()
+    print("\nReady to execute!")
+
+if __name__ == "__main__":
+    main()
+```
+
+### Step 6: 生成元数据追溯文件
+
+**创建 `.metadata.json`**：
+```json
+{
+  "skill_name": "[name]",
+  "version": "[version]",
+  "generated_by": "skill-factory Stage 3",
+  "generated_at": "[ISO timestamp]",
+  "based_on": {
+    "stage_1_prompt_generator": "[Stage 1 生成时间]",
+    "stage_2_auditor": "[Stage 2 审核时间]"
+  },
+  "audit_status": "pending",
+  "confidence": 0.85,
+  "experience_parts": {
+    "auto_generated": "5 base experiences",
+    "user_feedback": "pending"
+  }
+}
+```
+
+---
+
+## 质量保证
+
+生成的包必须满足：
+
+- ✅ **结构完整**：必须包含 SKILL.md、EXPERIENCE.md、scripts/
+- ✅ **可激活**：activate.py 必须能正确读取 EXPERIENCE.md
+- ✅ **可追溯**：.metadata.json 记录了生成来源
+- ✅ **前向兼容**：EXPERIENCE.md 第二部分有清晰的"补充位置"标记
+
+---
+
+## 禁止行为
+
+- ❌ 不要修改 Stage 2 通过的提示词内容（只能复制）
+- ❌ 不要生成随意的经验（必须按模板）
+- ❌ 不要跳过 .metadata.json（后续追溯需要）
+- ❌ 不要手工编辑生成的包后再交付 Stage 4（要提示用户确认）
+
+---
+
+## 交付给 Stage 4
+
+完成后输出：
+
+```
+✅ SKILL 包生成完成
+
+【包信息】
+- 包名：[skill-name]
+- 路径：[absolute-path]
+- 包含文件：SKILL.md, EXPERIENCE.md, scripts/, references/
+
+【自动生成的经验】
+- 模板：[代码/数据/文案/绘画]
+- 条目数：5 个基础经验
+
+【下一步】
+已准备好提交 Stage 4 质量审计。
+```
+
