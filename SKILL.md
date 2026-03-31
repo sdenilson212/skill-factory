@@ -1,6 +1,6 @@
 ---
 name: skill-factory
-version: 1.1.0
+version: 1.2.0
 description: SKILL 自动化生产流水线，按顺序执行五阶段流程（检查→需求挖掘→审核→生成→审计），全自动完成从需求描述到高质量 SKILL 包的完整制作
 dependencies:
   - prompt-generator
