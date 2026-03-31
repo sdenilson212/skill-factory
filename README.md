@@ -31,8 +31,8 @@
 |-------|------|------|
 | **Stage 0** | 前置检查 | ✅ 验证依赖、环境检查 |
 | **Stage 1** | 需求挖掘 | 📝 多轮需求确认、SKILL 提示词草稿 |
-| **Stage 2** | 安全审核 | 🔍 结构/逻辑/安全性完整检查（内置） |
-| **Stage 3** | 包生成 | 📦 完整 SKILL 目录（.md + scripts/ + references/） |
+| **Stage 2** | 提示词审核 | 🔍 prompt-auditor 进行结构/逻辑/安全检查 |
+| **Stage 3** | 包生成 | 📦 完整 SKILL 目录（SKILL.md + EXPERIENCE.md + scripts/ + references/） |
 | **Stage 4** | 质量审计 | 🐛 代码分析 + 安全扫描 + 自动修复提案 |
 | **Stage 5** | 安装 | ✨ 从临时目录移到正式技能库（可选） |
 
@@ -55,9 +55,9 @@
 - 修改历史和版本号
 - 阶段间的数据流
 
-### 🛡️ 内置审核引擎（Stage 2）
+### 🛡️ Stage 2 — prompt-auditor 提示词审核
 
-不依赖外部工具，直接检查：
+使用 prompt-auditor Skill 进行：
 
 - **结构完整性** — SKILL.md 必读项、frontmatter、步骤格式
 - **安全性** — 正则检测注入模式、越狱指令、敏感信息泄露
@@ -93,10 +93,10 @@ python -m pytest tests/ -v  # 可选，需有测试文件
 AI 自动执行流水线：
 
 ```
-✓ Stage 0: 检查 prompt-generator / skill-creator / skill-auditor 已安装
+✓ Stage 0: 检查 prompt-generator / prompt-auditor / skill-creator / skill-auditor 已安装
 ✓ Stage 1: 多轮问卷确认 → 生成 SKILL 提示词
-✓ Stage 2: 安全审核 + 逻辑检查 → 全部通过
-✓ Stage 3: 生成完整 SKILL 包
+✓ Stage 2: prompt-auditor 审核 + 逻辑检查 → 全部通过
+✓ Stage 3: 生成完整 SKILL 包（SKILL.md + EXPERIENCE.md + scripts/）
 ✓ Stage 4: 代码审计 → 2 个 P2 问题修复
 ✓ Stage 5: 安装到 ~/.workbuddy/skills/user-feedback-analyzer/
 
@@ -107,24 +107,27 @@ AI 自动执行流水线：
 
 ## 前置依赖
 
-本流水线依赖以下三个子 Skill（需先安装）：
+本流水线依赖以下四个子 Skill（需先安装）：
 
 ### 1. `prompt-generator` — 需求挖掘 & 提示词生成
 - 功能：多轮问卷确认 + 自动生成高质量提示词草稿
 - 触发：Stage 1
 - 状态：✅ 来自 WorkBuddy/OpenClaw 生态
 
-### 2. `skill-creator` — SKILL 包结构生成
-- 功能：根据提示词自动生成 SKILL.md + 目录结构
+### 2. `prompt-auditor` — 提示词安全与逻辑审核
+- 功能：检查 SKILL 提示词的结构、安全性、逻辑一致性
+- 触发：Stage 2
+- 状态：✅ 来自 WorkBuddy/OpenClaw 生态
+
+### 3. `skill-creator` — SKILL 包结构生成
+- 功能：根据审核通过的提示词自动生成完整 SKILL 包（包含 SKILL.md + EXPERIENCE.md）
 - 触发：Stage 3
 - 状态：✅ 来自 WorkBuddy/OpenClaw 生态
 
-### 3. `skill-auditor` — 代码审计 & 安全扫描
+### 4. `skill-auditor` — 代码审计 & 安全扫描
 - 功能：逻辑检查 + 安全漏洞扫描 + 自动修复提案
 - 触发：Stage 4
 - 状态：✅ 来自 WorkBuddy/OpenClaw 生态
-
-> **注**：Stage 2 的内置审核引擎是 Skill Factory 本身包含的，不需要额外 Skill 支持。
 
 ---
 
@@ -199,7 +202,26 @@ AI 自动执行流水线：
 
 ---
 
-## 目录结构
+## 流水线输出物
+
+### 生成的 SKILL 包结构（Stage 3 产出）
+
+```
+[skill-name]/
+├── SKILL.md                    # 审核通过的提示词（含"激活时必读"段落）
+├── EXPERIENCE.md               # 经验知识库（第一部分由 Stage 3 自动生成）
+├── scripts/
+│   ├── activate.py             # 激活脚本
+│   └── [task-specific].py      # 特定任务脚本（如有）
+└── references/
+    └── [external-docs].md      # 参考文档（如有）
+```
+
+**关键说明**：
+- **EXPERIENCE.md** — Stage 3 自动生成第一部分（3-5 条结构性经验），第二部分在 Stage 5 由用户反馈补充。这个文件记录了 Skill 的关键决策点和踩坑经验，每次激活时必读。
+- **SKILL.md** — 在顶部自动插入"激活时必读"段落，确保每次加载时都会读 EXPERIENCE.md。
+
+### Skill Factory 本体结构
 
 ```
 skill-factory/
@@ -208,6 +230,12 @@ skill-factory/
 ├── LICENSE                          # MIT License
 ├── CONTRIBUTING.md                  # 贡献指南
 ├── .gitignore                       # Git 忽略配置
+├── stage0-dependency-check/         # Stage 0 依赖检查
+├── stage1-prompt-generator/         # Stage 1 需求挖掘
+├── stage2-prompt-auditor/           # Stage 2 提示词审核
+├── stage3-skill-creator/            # Stage 3 包生成
+├── stage4-skill-auditor/            # Stage 4 质量审计
+├── stage5-installation/             # Stage 5 安装管理
 ├── .github/
 │   └── workflows/
 │       └── validate.yml             # GitHub Actions 自动验证
