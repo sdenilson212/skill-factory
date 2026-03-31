@@ -4,6 +4,7 @@ version: 1.1.0
 description: SKILL 自动化生产流水线，按顺序执行五阶段流程（检查→需求挖掘→审核→生成→审计），全自动完成从需求描述到高质量 SKILL 包的完整制作
 dependencies:
   - prompt-generator
+  - prompt-auditor
   - skill-creator
   - skill-auditor
 ---
@@ -68,6 +69,7 @@ Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5
 
 2. 检查以下三个目录是否存在：
    - `[根目录]\prompt-generator\`
+   - `[根目录]\prompt-auditor\`
    - `[根目录]\skill-creator\`
    - `[根目录]\skill-auditor\`
 
@@ -82,6 +84,7 @@ Stage 0 → Stage 1 → Stage 2 → Stage 3 → Stage 4 → Stage 5
 ✅ Stage 0 完成 — 依赖检查通过
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 prompt-generator  ✓
+prompt-auditor    ✓
 skill-creator    ✓
 skill-auditor    ✓
 → 开始 Stage 1
@@ -192,22 +195,53 @@ SKILL 名称：[name]
 
 **立即执行以下步骤：**
 
-> ⚠️ 说明：Stage 2 使用**内置审核逻辑**对 SKILL.md 草稿进行四维度检查。
+> ⚠️ 说明：Stage 2 使用**prompt-auditor + 内置审核逻辑**对 SKILL.md 草稿进行两层检查。
 > 
-> **为什么不用 prompt-auditor？**
-> - `prompt-auditor` 的职责：检测提示词中的**安全注入风险**（越狱、系统信息泄露、AI 被利用的漏洞）
-> - Stage 2 的职责：检查 SKILL.md 的**结构完整性和逻辑一致性**（frontmatter 格式、步骤数量、示例完整度）
-> - 两者检查维度完全不同，不存在功能重叠
+> **分工说明**：
+> - 第一层（prompt-auditor）：检测提示词中的**安全注入风险**（越狱、系统信息泄露、AI 被利用的漏洞）
+> - 第二层（内置逻辑）：检查 SKILL.md 的**结构完整性和逻辑一致性**（frontmatter 格式、步骤数量、示例完整度）
+> - 两层检查维度不同，通力合作确保质量
 > - Stage 4 的 `skill-auditor` 负责完整 SKILL 包的综合审计，包括代码逻辑、安全风险等
+
+### 第一步：调用 prompt-auditor 进行安全审核
+
+**立即激活 `prompt-auditor` Skill**，按以下规范传递参数：
+
+**参数传递格式（JSON）**：
+```json
+{
+  "prompt_content": "[Stage 1 输出的 SKILL.md 草稿完整内容]",
+  "check_level": "full",
+  "output_format": "structured"
+}
+```
+
+**prompt-auditor 的预期输出**：
+- 安全漏洞检测报告（注入风险、越狱风险、信息泄露等）
+- 逻辑完整性分析
+- 风险评级（无风险 / 低风险 / 中风险 / 高风险 / 严重风险）
+- 修复建议（具体可执行的修改方案）
+
+### 第二步：处理 prompt-auditor 的审计结果
+
+根据风险评级立即执行：
+
+| 风险评级 | 立即执行 |
+|---------|---------|
+| 无风险 / 低风险 | 🟢 继续进行第三步（内置结构审核）|
+| 中风险 | 🟠 应用修复建议，再次运行 prompt-auditor，直到评级 ≤ 低风险 |
+| 高风险 / 严重风险 | 🔴 **强制回退 Stage 1**，报告具体风险，不允许继续 |
+
+### 第三步：执行内置结构审核
 
 1. 将 Stage 1 输出的 SKILL.md 草稿作为输入，执行以下四维度审核：
 
    | 维度 | 检查内容 |
    |------|---------|
    | 结构完整性 | frontmatter 完整、步骤≥3步、示例≥1个 |
-   | 安全性 | 注入攻击、越狱风险、系统信息泄露 |
    | 逻辑一致性 | 步骤矛盾、输入输出不对应、边界缺失 |
    | 可执行性 | 路径正确、依赖声明、步骤可落地 |
+   | 规范性 | 格式规范、用词准确、层级合理 |
 
 2. 根据审核结果立即执行：
 
@@ -218,7 +252,7 @@ SKILL 名称：[name]
    | 发现 P2 问题 | 🟡 **直接修复后继续** |
    | 无问题 | 🟢 **宣布审核通过，进入 Stage 3** |
 
-**禁止绕过审核环节。禁止跳过本阶段直接进入 Stage 3。**
+**禁止绕过审核环节。禁止跳过本阶段直接进入 Stage 3。禁止同时跳过 prompt-auditor 和结构审核。**
 
 **阶段输出格式：**
 
